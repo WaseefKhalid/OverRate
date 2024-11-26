@@ -1,72 +1,71 @@
 import streamlit as st
 from datetime import datetime, timedelta
-import pytz  # Import timezone library
 
 # Default constants
-DEFAULT_OVER_DURATION = timedelta(minutes=4, seconds=25)  # 4 minutes 25 seconds
-DEFAULT_TOTAL_DURATION = timedelta(minutes=85)  # 85 minutes for 20 overs
-
-# Define Guyana's timezone
-LOCAL_TIMEZONE = pytz.timezone("America/Guyana")
+DEFAULT_OVER_DURATION = timedelta(minutes=4, seconds=25)  # Default: 4 minutes 25 seconds
+DEFAULT_TOTAL_DURATION = timedelta(minutes=85)  # Default: 85 minutes for 20 overs
 
 # App title
-st.title("Real-Time Cricket Over Tracker (24-Hour Format)")
+st.title("Customizable Cricket Over Completion Tracker")
 
 # Input: Total overs and start time
 st.subheader("Match Setup")
 total_overs = st.number_input("Enter the total number of overs in the innings:", min_value=1, value=20)
-start_time_str = st.text_input("Enter the start time of the match (HH:MM, 24-hour format):", value="22:00")
+start_time_str = st.text_input("Enter the start time of the match (HH:MM, 24-hour format):", value="19:00")
+
+# Allow user to set maximum time per over
+st.subheader("Set Maximum Time Allowed per Over")
+minutes_per_over = st.number_input("Minutes per over:", min_value=0, max_value=10, value=4, step=1)
+seconds_per_over = st.number_input("Seconds per over:", min_value=0, max_value=59, value=25, step=1)
+
+# Calculate time per over
+time_per_over = timedelta(minutes=minutes_per_over, seconds=seconds_per_over)
 
 # Validate inputs
 if start_time_str:
     try:
         start_time = datetime.strptime(start_time_str, "%H:%M")
-        start_time = LOCAL_TIMEZONE.localize(start_time)  # Localize start time to the specified timezone
-        st.success(f"Start time recorded: {start_time.strftime('%H:%M')} ({LOCAL_TIMEZONE.zone})")
+        st.success(f"Start time recorded: {start_time.strftime('%I:%M %p')}")
     except ValueError:
         st.error("Invalid time format. Please enter in HH:MM format (24-hour clock).")
         start_time = None
 else:
     start_time = None
 
-# Generate over schedule
-if start_time:
-    st.subheader("Over Completion Schedule")
+# Generate over completion times
+if st.button("Generate Over Completion Schedule") and start_time:
+    # Calculate the exact match end time
+    total_match_duration = time_per_over * total_overs
+    match_end_time = start_time + total_match_duration
+
+    # Calculate completion time for each over
     over_schedule = []
     for over in range(1, total_overs + 1):
-        over_end_time = start_time + (DEFAULT_OVER_DURATION * over)
-        over_schedule.append((over, over_end_time))
+        over_end_time = start_time + (time_per_over * over)
+        over_schedule.append((over, over_end_time.strftime("%I:%M:%S %p")))
 
-    # Display checkboxes for each over
-    st.subheader("Track Overs in Real-Time")
-    completed_overs = []
-    for over, end_time in over_schedule:
-        is_completed = st.checkbox(f"Over {over} (Ideal End Time: {end_time.strftime('%H:%M:%S')})", key=f"over_{over}")
-        completed_overs.append(is_completed)
+    # Display the schedule
+    st.subheader("Over Completion Schedule")
+    st.write("The following schedule shows when each over should ideally end (HH:MM:SS):")
+    for over, time in over_schedule:
+        st.write(f"**Over {over}:** Complete by {time}")
 
-    # Real-time tracking
-    current_time = datetime.now(LOCAL_TIMEZONE)  # Use localized current time
-    st.subheader("Real-Time Status")
-    st.write(f"Current Time: {current_time.strftime('%H:%M:%S')} ({LOCAL_TIMEZONE.zone})")
+    # Final match timing validation
+    st.subheader("Match Timing")
+    st.write(f"Match starts at: {start_time.strftime('%I:%M %p')}")
+    st.write(f"Match should end by: {match_end_time.strftime('%I:%M:%S %p')}")
 
-    # Calculate "behind/ahead" status
-    completed_count = sum(completed_overs)
-    ideal_time_for_completed = start_time + (DEFAULT_OVER_DURATION * completed_count)
-
-    if current_time > ideal_time_for_completed:
-        time_diff = current_time - ideal_time_for_completed
-        total_seconds = time_diff.total_seconds()
-        minutes, seconds = divmod(total_seconds, 60)
-        st.error(f"Behind schedule by: {int(minutes):02d} minutes and {int(seconds):02d} seconds.")
+    # Warn if the match duration exceeds 85 minutes
+    if total_match_duration > DEFAULT_TOTAL_DURATION:
+        st.warning(
+            f"The total match duration ({total_match_duration}) exceeds the default allowed duration of 85 minutes."
+        )
+    elif total_match_duration == DEFAULT_TOTAL_DURATION:
+        st.success("The match duration is perfectly aligned with the default 85-minute duration.")
     else:
-        time_diff = ideal_time_for_completed - current_time
-        total_seconds = time_diff.total_seconds()
-        minutes, seconds = divmod(total_seconds, 60)
-        st.success(f"Ahead of schedule by: {int(minutes):02d} minutes and {int(seconds):02d} seconds.")
-
-    # Final match end time
-    final_time = start_time + (DEFAULT_OVER_DURATION * total_overs)
-    st.write(f"Expected Match End Time: {final_time.strftime('%H:%M:%S')} ({LOCAL_TIMEZONE.zone})")
+        st.info(
+            f"The total match duration ({total_match_duration}) is shorter than the default allowed duration of 85 minutes."
+        )
 
 # Reset option
 if st.button("Reset"):
