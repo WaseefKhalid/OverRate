@@ -1,15 +1,12 @@
-
-
-
 import streamlit as st
 from datetime import datetime, timedelta
 
 # Constants
-MAX_TIME_PER_OVER = 265  # 4 minutes and 25 seconds in seconds
-TOTAL_MATCH_DURATION = 85 * 60  # Total 85 minutes in seconds for 20 overs
+OVER_DURATION = timedelta(minutes=4, seconds=25)  # 4 minutes and 25 seconds
+TOTAL_MATCH_DURATION = timedelta(minutes=85)  # Total match duration for 20 overs
 
 # App title
-st.title("Accurate Cricket Over Completion Tracker")
+st.title("Cricket Over Completion Tracker (Accurate to 85 Minutes)")
 
 # Input: Total overs and start time
 st.subheader("Match Setup")
@@ -29,14 +26,14 @@ else:
 
 # Generate over completion times
 if st.button("Generate Over Completion Schedule") and start_time:
+    # Calculate exact end time for the match
+    match_end_time = start_time + TOTAL_MATCH_DURATION
+
     # Calculate completion time for each over
     over_schedule = []
     for over in range(1, total_overs + 1):
-        over_end_time = start_time + timedelta(seconds=over * MAX_TIME_PER_OVER)
+        over_end_time = start_time + (OVER_DURATION * over)
         over_schedule.append((over, over_end_time.strftime("%I:%M:%S %p")))
-
-    # Calculate the final end time
-    final_time = start_time + timedelta(seconds=total_overs * MAX_TIME_PER_OVER)
 
     # Display the schedule
     st.subheader("Over Completion Schedule")
@@ -44,18 +41,20 @@ if st.button("Generate Over Completion Schedule") and start_time:
     for over, time in over_schedule:
         st.write(f"**Over {over}:** Complete by {time}")
 
-    # Final match end time
+    # Final match timing validation
     st.subheader("Match Timing")
     st.write(f"Match starts at: {start_time.strftime('%I:%M %p')}")
-    st.write(f"Match should end at: {final_time.strftime('%I:%M:%S %p')}")
+    st.write(f"Match should end by: {match_end_time.strftime('%I:%M:%S %p')}")
 
-    # Validate total match duration
-    expected_end_time = start_time + timedelta(seconds=TOTAL_MATCH_DURATION)
-    if final_time == expected_end_time:
-        st.success(f"The match ends correctly at {final_time.strftime('%I:%M:%S %p')} after 85 minutes.")
+    # Check if the final over ends exactly at the expected match end time
+    if over_schedule[-1][1] == match_end_time.strftime("%I:%M:%S %p"):
+        st.success(f"The match ends correctly at {match_end_time.strftime('%I:%M:%S %p')} after 85 minutes.")
     else:
-        st.error(f"Timing issue detected! Expected end time is {expected_end_time.strftime('%I:%M:%S %p')}. Please review the calculations.")
+        st.error(
+            f"Timing issue detected! Last over ends at {over_schedule[-1][1]} but should end at {match_end_time.strftime('%I:%M:%S %p')}."
+        )
 
 # Reset option
 if st.button("Reset"):
     st.experimental_rerun()
+
