@@ -2,10 +2,10 @@ import streamlit as st
 from datetime import datetime, timedelta
 
 # Constants
-MAX_TIME_PER_OVER = 265  # 4 minutes 25 seconds in seconds
+MAX_TIME_PER_OVER = 265  # 4 minutes and 25 seconds in seconds
 
 # App title
-st.title("Comprehensive Cricket Over Completion Tracker")
+st.title("Accurate Cricket Over Completion Tracker")
 
 # Input: Total overs and start time
 st.subheader("Match Setup")
@@ -37,7 +37,16 @@ if st.button("Generate Over Completion Schedule") and start_time:
     for over, time in over_schedule:
         st.write(f"**Over {over}:** Complete by {time}")
 
+    # Final check for last over time
+    final_time = start_time + timedelta(seconds=total_overs * MAX_TIME_PER_OVER)
+    expected_total_time = timedelta(minutes=85, seconds=0)  # 85 minutes as total duration
+    if final_time.time() == (start_time + expected_total_time).time():
+        st.success(f"Final over correctly ends at {final_time.strftime('%I:%M:%S %p')}.")
+    else:
+        st.warning(f"Final over slightly off. Expected end time: {(start_time + expected_total_time).strftime('%I:%M:%S %p')}.")
+
 # Reset option
 if st.button("Reset"):
     st.experimental_rerun()
+
 
