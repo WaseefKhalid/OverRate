@@ -57,12 +57,12 @@ if start_time:
         time_diff = current_time - ideal_time_for_completed
         total_seconds = time_diff.total_seconds()
         minutes, seconds = divmod(total_seconds, 60)
-        st.error(f"Behind schedule by: {int(minutes)} minutes and {int(seconds)} seconds.")
+        st.error(f"Behind schedule by: {int(minutes):02d} minutes and {int(seconds):02d} seconds.")
     else:
         time_diff = ideal_time_for_completed - current_time
         total_seconds = time_diff.total_seconds()
         minutes, seconds = divmod(total_seconds, 60)
-        st.success(f"Ahead of schedule by: {int(minutes)} minutes and {int(seconds)} seconds.")
+        st.success(f"Ahead of schedule by: {int(minutes):02d} minutes and {int(seconds):02d} seconds.")
 
     # Final match end time
     final_time = start_time + (DEFAULT_OVER_DURATION * total_overs)
@@ -71,6 +71,7 @@ if start_time:
 # Reset option
 if st.button("Reset"):
     st.experimental_rerun()
+
 
 
 
