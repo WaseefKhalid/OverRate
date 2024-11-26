@@ -1,10 +1,13 @@
 import streamlit as st
 from datetime import datetime, timedelta
-import time
+import pytz  # Import timezone library
 
 # Default constants
 DEFAULT_OVER_DURATION = timedelta(minutes=4, seconds=25)  # 4 minutes 25 seconds
 DEFAULT_TOTAL_DURATION = timedelta(minutes=85)  # 85 minutes for 20 overs
+
+# Define your local timezone (adjust this to your timezone, e.g., "Asia/Karachi")
+LOCAL_TIMEZONE = pytz.timezone("Asia/Karachi")
 
 # App title
 st.title("Real-Time Cricket Over Tracker")
@@ -18,7 +21,8 @@ start_time_str = st.text_input("Enter the start time of the match (HH:MM, 24-hou
 if start_time_str:
     try:
         start_time = datetime.strptime(start_time_str, "%H:%M")
-        st.success(f"Start time recorded: {start_time.strftime('%I:%M %p')}")
+        start_time = LOCAL_TIMEZONE.localize(start_time)  # Localize start time to the specified timezone
+        st.success(f"Start time recorded: {start_time.strftime('%I:%M %p')} ({LOCAL_TIMEZONE.zone})")
     except ValueError:
         st.error("Invalid time format. Please enter in HH:MM format (24-hour clock).")
         start_time = None
@@ -41,9 +45,9 @@ if start_time:
         completed_overs.append(is_completed)
 
     # Real-time tracking
-    current_time = datetime.now()
+    current_time = datetime.now(LOCAL_TIMEZONE)  # Use localized current time
     st.subheader("Real-Time Status")
-    st.write(f"Current Time: {current_time.strftime('%I:%M:%S %p')}")
+    st.write(f"Current Time: {current_time.strftime('%I:%M:%S %p')} ({LOCAL_TIMEZONE.zone})")
 
     # Calculate "behind/ahead" status
     completed_count = sum(completed_overs)
@@ -57,11 +61,12 @@ if start_time:
 
     # Final match end time
     final_time = start_time + (DEFAULT_OVER_DURATION * total_overs)
-    st.write(f"Expected Match End Time: {final_time.strftime('%I:%M:%S %p')}")
+    st.write(f"Expected Match End Time: {final_time.strftime('%I:%M:%S %p')} ({LOCAL_TIMEZONE.zone})")
 
 # Reset option
 if st.button("Reset"):
     st.experimental_rerun()
+
 
 
 
