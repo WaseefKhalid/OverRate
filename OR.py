@@ -6,8 +6,8 @@ import pytz  # Import timezone library
 DEFAULT_OVER_DURATION = timedelta(minutes=4, seconds=25)  # 4 minutes 25 seconds
 DEFAULT_TOTAL_DURATION = timedelta(minutes=85)  # 85 minutes for 20 overs
 
-# Define your local timezone (adjust this to your timezone, e.g., "Asia/Karachi")
-LOCAL_TIMEZONE = pytz.timezone("Asia/Karachi")
+# Define Guyana's timezone
+LOCAL_TIMEZONE = pytz.timezone("America/Guyana")
 
 # App title
 st.title("Real-Time Cricket Over Tracker")
@@ -66,6 +66,7 @@ if start_time:
 # Reset option
 if st.button("Reset"):
     st.experimental_rerun()
+
 
 
 
